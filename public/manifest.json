@@ -1,0 +1,26 @@
+{
+  "name": "Premier League 2025/26",
+  "short_name": "EPL",
+  "description": "Premier League matches and standings",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#37003C",
+  "theme_color": "#37003C",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["sports"],
+  "lang": "vi"
+}
