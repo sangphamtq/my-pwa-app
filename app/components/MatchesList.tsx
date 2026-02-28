@@ -16,15 +16,39 @@ interface Match {
   matchId: string
   homeTeam: Team
   awayTeam: Team
-  kickoff: string
+  kickoff: string // format: "YYYY-MM-DD HH:mm:ss"
   period: string
   clock?: string
   ground: string
   matchWeek: number
 }
 
+function parseKickoff(raw: string): Date | null {
+  const match = raw.match(
+    /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/
+  )
+  if (!match) return null
+
+  const [, year, month, day, hour, minute, second] = match
+
+  const d = new Date(
+    Date.UTC(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hour),
+      Number(minute),
+      Number(second)
+    )
+  )
+
+  return isNaN(d.getTime()) ? null : d
+}
+
 function formatDate(dateStr: string) {
-  const d = new Date(dateStr + ' UTC')
+  const d = parseKickoff(dateStr)
+  if (!d) return ''
+
   const now = new Date()
   const today = now.toDateString()
   const tomorrow = new Date(now)
@@ -39,18 +63,22 @@ function formatDate(dateStr: string) {
   if (d.toDateString() === today) return `Hôm nay • ${time}`
   if (d.toDateString() === tomorrow.toDateString()) return `Ngày mai • ${time}`
 
-  return d.toLocaleDateString('vi-VN', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'numeric',
-    timeZone: 'Asia/Ho_Chi_Minh',
-  }) + ` • ${time}`
+  return (
+    d.toLocaleDateString('vi-VN', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'numeric',
+      timeZone: 'Asia/Ho_Chi_Minh',
+    }) + ` • ${time}`
+  )
 }
 
 function groupByDate(matches: Match[]) {
   const groups: Record<string, Match[]> = {}
   matches.forEach((m) => {
-    const d = new Date(m.kickoff + ' UTC')
+    const d = parseKickoff(m.kickoff)
+    if (!d) return
+
     const key = d.toLocaleDateString('vi-VN', {
       weekday: 'long',
       day: 'numeric',
@@ -121,14 +149,26 @@ function MatchCard({ match, index }: { match: Match; index: number }) {
   const isFinished = match.period === 'FullTime'
   const hasScore = match.homeTeam.score !== undefined
   const isMU = match.homeTeam.abbr == 'MUN' || match.awayTeam.abbr == 'MUN'
-  
+
+  // Highlight card if isMU is true
+  const highlightStyle = isMU
+    ? {
+        boxShadow: '0 0 0 3px #DA291C80, 0 2px 16px 0 rgba(218,41,28,0.08)',
+        border: '2px solid #DA291C', // MU Red
+        background: 'rgba(218,41,28,0.10)',
+      }
+    : {}
+
   return (
     <div
       className="match-card relative rounded-xl overflow-hidden"
       style={{
         background: 'white',
-        border: isLive ? '1px solid rgba(255,40,130,0.4)' : '1px solid rgba(255,255,255,0.06)',
+        border: isLive
+          ? '1px solid rgba(255,40,130,0.4)'
+          : '1px solid rgba(255,255,255,0.06)',
         animationDelay: `${index * 0.05}s`,
+        ...highlightStyle,
       }}
     >
       {/* Live top border */}
@@ -176,11 +216,15 @@ function MatchCard({ match, index }: { match: Match; index: number }) {
               className="text-lg font-bold text-primary"
               style={{ fontFamily: 'var(--font-barlow)' }}
             >
-              {new Date(match.kickoff + ' UTC').toLocaleTimeString('vi-VN', {
-                hour: '2-digit',
-                minute: '2-digit',
-                timeZone: 'Asia/Ho_Chi_Minh',
-              })}
+              {(() => {
+                const d = parseKickoff(match.kickoff)
+                if (!d) return ''
+                return d.toLocaleTimeString('vi-VN', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  timeZone: 'Asia/Ho_Chi_Minh',
+                })
+              })()}
             </div>
           )}
 
