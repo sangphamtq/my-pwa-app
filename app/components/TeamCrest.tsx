@@ -1,5 +1,30 @@
 'use client'
 
+import Image from 'next/image'
+
+const TEAM_LOGOS: Record<string, { src: string; alt: string }> = {
+  ARS: { src: '/logos/arsenal.svg', alt: 'Arsenal' },
+  CHE: { src: '/logos/chelsea.svg', alt: 'Chelsea' },
+  LIV: { src: '/logos/liverpool.svg', alt: 'Liverpool' },
+  MCI: { src: '/logos/man-city.svg', alt: 'Manchester City' },
+  MUN: { src: '/logos/man-united.svg', alt: 'Manchester United' },
+  TOT: { src: '/logos/tottenham.svg', alt: 'Tottenham Hotspur' },
+  NEW: { src: '/logos/newcastle.svg', alt: 'Newcastle United' },
+  AVL: { src: '/logos/aston-villa.svg', alt: 'Aston Villa' },
+  BHA: { src: '/logos/brighton.svg', alt: 'Brighton & Hove Albion' },
+  WHU: { src: '/logos/west-ham.svg', alt: 'West Ham United' },
+  EVE: { src: '/logos/everton.svg', alt: 'Everton' },
+  BRE: { src: '/logos/brentford.svg', alt: 'Brentford' },
+  FUL: { src: '/logos/fulham.svg', alt: 'Fulham' },
+  BOU: { src: '/logos/bournemouth.svg', alt: 'Bournemouth' },
+  NFO: { src: '/logos/forest.svg', alt: 'Nottingham Forest' },
+  CRY: { src: '/logos/crystal-palace.svg', alt: 'Crystal Palace' },
+  LEE: { src: '/logos/leeds.svg', alt: 'Leeds United' },
+  BUR: { src: '/logos/burnley.svg', alt: 'Burnley' },
+  WOL: { src: '/logos/wolves.svg', alt: 'Wolverhampton Wanderers' },
+  SUN: { src: '/logos/sunderland.svg', alt: 'Sunderland' },
+}
+
 const TEAM_COLORS: Record<string, { bg: string; text: string }> = {
   ARS: { bg: '#EF0107', text: '#fff' },
   CHE: { bg: '#034694', text: '#fff' },
@@ -30,7 +55,31 @@ export default function TeamCrest({
   abbr: string
   size?: number
 }) {
+  const logo = TEAM_LOGOS[abbr]
+
+  if (logo) {
+    return (
+      <div
+        style={{
+          width: size,
+          height: size,
+          borderRadius: size * 0.15
+        }}
+        className="flex items-center justify-center flex-shrink-0 select-none bg-white/5"
+      >
+        <Image
+          src={logo.src}
+          alt={logo.alt}
+          width={size}
+          height={size}
+          className="object-contain w-full h-full"
+        />
+      </div>
+    )
+  }
+
   const colors = TEAM_COLORS[abbr] || { bg: '#555', text: '#fff' }
+
   return (
     <div
       style={{

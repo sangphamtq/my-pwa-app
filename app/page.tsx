@@ -10,12 +10,11 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>('matches')
 
   return (
-    <div className="min-h-screen" style={{ background: '#37003C' }}>
+    <div className="min-h-screen">
       {/* Header */}
       <header
         className="sticky top-0 z-50"
         style={{
-          background: 'rgba(55, 0, 60, 0.85)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
           borderBottom: '1px solid rgba(255,255,255,0.08)',
@@ -44,15 +43,14 @@ export default function Home() {
                 className="text-lg font-black leading-none tracking-tight"
                 style={{
                   fontFamily: 'var(--font-barlow)',
-                  color: '#F8F8F8',
                   letterSpacing: '-0.5px',
                 }}
               >
                 PREMIER LEAGUE
               </h1>
               <span
-                className="text-xs font-medium"
-                style={{ color: '#00FF87', fontFamily: 'var(--font-barlow)', letterSpacing: '0.05em' }}
+                className="text-xs font-medium text-primary"
+                style={{ fontFamily: 'var(--font-barlow)', letterSpacing: '0.05em' }}
               >
                 SEASON 2025/26
               </span>
@@ -60,12 +58,11 @@ export default function Home() {
 
             <div className="ml-auto">
               <span
-                className="text-xs px-2.5 py-1 rounded-full font-bold"
+                className="text-xs px-2.5 py-1 rounded-full font-bold text-primary"
                 style={{
                   background: 'rgba(0,255,135,0.1)',
-                  color: '#00FF87',
                   fontFamily: 'var(--font-barlow)',
-                  border: '1px solid rgba(0,255,135,0.2)',
+                  border: '1px solid rgba(0,255,135,0.6)',
                   letterSpacing: '0.05em',
                 }}
               >
@@ -91,9 +88,9 @@ export default function Home() {
                   fontSize: '15px',
                   fontWeight: 700,
                   letterSpacing: '0.02em',
-                  color: activeTab === tab.key ? '#F8F8F8' : 'rgba(255,255,255,0.4)',
+                  color: activeTab === tab.key ? '#222222' : 'rgba(0,0,0,0.5)',
                   borderBottom: activeTab === tab.key
-                    ? '2px solid #00FF87'
+                    ? '2px solid #00c568'
                     : '2px solid transparent',
                   transition: 'all 0.2s ease',
                 }}

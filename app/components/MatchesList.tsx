@@ -92,18 +92,17 @@ export default function MatchesList() {
         <div key={date} className={`animate-fade-in`} style={{ animationDelay: `${gi * 0.08}s` }}>
           {/* Date header */}
           <div className="flex items-center gap-3 mb-3 mt-2">
-            <div className="h-px flex-1 bg-white/10" />
+            <div className="h-px flex-1 bg-purple-800/10" />
             <span
-              className="text-xs font-semibold tracking-widest uppercase"
+              className="text-xs font-semibold tracking-widest uppercase text-primary"
               style={{
-                color: '#00FF87',
                 fontFamily: 'var(--font-barlow)',
                 letterSpacing: '0.12em',
               }}
             >
               {date}
             </span>
-            <div className="h-px flex-1 bg-white/10" />
+            <div className="h-px flex-1 bg-purple-800/10" />
           </div>
 
           <div className="space-y-2">
@@ -121,12 +120,13 @@ function MatchCard({ match, index }: { match: Match; index: number }) {
   const isLive = match.period === 'Live' || match.period === 'HalfTime'
   const isFinished = match.period === 'FullTime'
   const hasScore = match.homeTeam.score !== undefined
-
+  const isMU = match.homeTeam.abbr == 'MUN' || match.awayTeam.abbr == 'MUN'
+  
   return (
     <div
       className="match-card relative rounded-xl overflow-hidden"
       style={{
-        background: 'linear-gradient(135deg, #1A0A1C 0%, #0F0F1E 100%)',
+        background: 'white',
         border: isLive ? '1px solid rgba(255,40,130,0.4)' : '1px solid rgba(255,255,255,0.06)',
         animationDelay: `${index * 0.05}s`,
       }}
@@ -157,15 +157,15 @@ function MatchCard({ match, index }: { match: Match; index: number }) {
             >
               <span
                 style={{
-                  color: isLive ? '#FF2882' : isFinished ? '#F8F8F8' : '#F8F8F8',
+                  color: isLive ? '#FF2882' : isFinished ? '#222222' : '#222222',
                 }}
               >
                 {match.homeTeam.score}
               </span>
-              <span className="text-white/20">:</span>
+              <span className="text-gray-600/40">:</span>
               <span
                 style={{
-                  color: isLive ? '#FF2882' : isFinished ? '#F8F8F8' : '#F8F8F8',
+                  color: isLive ? '#FF2882' : isFinished ? '#222222' : '#222222',
                 }}
               >
                 {match.awayTeam.score}
@@ -173,8 +173,8 @@ function MatchCard({ match, index }: { match: Match; index: number }) {
             </div>
           ) : (
             <div
-              className="text-lg font-bold"
-              style={{ fontFamily: 'var(--font-barlow)', color: '#00FF87' }}
+              className="text-lg font-bold text-primary"
+              style={{ fontFamily: 'var(--font-barlow)' }}
             >
               {new Date(match.kickoff + ' UTC').toLocaleTimeString('vi-VN', {
                 hour: '2-digit',
@@ -205,7 +205,7 @@ function MatchCard({ match, index }: { match: Match; index: number }) {
                 className="text-xs px-2 py-0.5 rounded-full"
                 style={{
                   background: 'rgba(255,255,255,0.06)',
-                  color: '#ffffff66',
+                  color: '#222222',
                   fontFamily: 'var(--font-barlow)',
                   fontSize: '10px',
                   letterSpacing: '0.05em',
@@ -218,7 +218,7 @@ function MatchCard({ match, index }: { match: Match; index: number }) {
               <span
                 style={{
                   fontSize: '10px',
-                  color: '#ffffff44',
+                  color: '#222222',
                   fontFamily: 'var(--font-barlow)',
                 }}
               >
@@ -243,7 +243,7 @@ function MatchCard({ match, index }: { match: Match; index: number }) {
       {/* Ground */}
       <div
         className="px-3 sm:px-4 pb-2 text-center"
-        style={{ fontSize: '10px', color: '#ffffff44', fontFamily: 'var(--font-dm-sans)' }}
+        style={{ fontSize: '10px', color: '#222222', fontFamily: 'var(--font-dm-sans)' }}
       >
         {match.ground}
       </div>

@@ -20,6 +20,9 @@ const config: Config = {
           gray: '#1A1A2E',
           card: '#0F0F1E',
         },
+        primary: {
+          DEFAULT: '#00c568'
+        }
       },
     },
   },

@@ -14,8 +14,7 @@
 }
 
 body {
-  background: #37003C;
-  color: #F8F8F8;
+  background: #f7d1fc;
   font-family: var(--font-dm-sans);
   -webkit-font-smoothing: antialiased;
 }
