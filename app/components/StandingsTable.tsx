@@ -65,7 +65,7 @@ export default function StandingsTable() {
   return (
     <div className="px-4 pb-8">
       {/* Legend */}
-      <div className="flex flex-wrap gap-x-4 gap-y-1 mb-4 text-xs" style={{ color: '#ffffff66' }}>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 mb-4 text-xs" style={{ color: '#222222' }}>
         {[
           { color: ZONE_COLORS.champions, label: 'Champions League' },
           { color: ZONE_COLORS.europa, label: 'Europa League' },
@@ -84,7 +84,7 @@ export default function StandingsTable() {
 
       {/* Table */}
       <div
-        className="rounded-2xl overflow-hidden"
+        className="rounded-2xl overflow-hidden bg-white"
         style={{ border: '1px solid rgba(255,255,255,0.06)' }}
       >
         {/* Header */}
@@ -101,7 +101,7 @@ export default function StandingsTable() {
               key={i}
               className={`text-center text-xs font-bold tracking-wider ${i === 1 ? 'text-left' : ''}`}
               style={{
-                color: '#ffffff55',
+                color: '#222222',
                 fontFamily: 'var(--font-barlow)',
                 letterSpacing: '0.05em',
               }}
@@ -135,7 +135,7 @@ export default function StandingsTable() {
                 className="text-center text-sm font-bold"
                 style={{
                   fontFamily: 'var(--font-barlow)',
-                  color: zone !== 'transparent' ? zone : '#ffffff55',
+                  color: zone !== 'transparent' ? zone : '#222222',
                 }}
               >
                 {overall.position}
@@ -148,7 +148,7 @@ export default function StandingsTable() {
                   className="text-sm font-semibold truncate"
                   style={{
                     fontFamily: 'var(--font-barlow)',
-                    color: isTop4 ? '#F8F8F8' : '#D1D5DB',
+                    color: isTop4 ? '#222222' : '#222222',
                   }}
                 >
                   {team.shortName}
@@ -168,7 +168,7 @@ export default function StandingsTable() {
                   className="text-center text-sm"
                   style={{
                     fontFamily: 'var(--font-barlow)',
-                    color: '#ffffff77',
+                    color: '#222222',
                   }}
                 >
                   {val}
