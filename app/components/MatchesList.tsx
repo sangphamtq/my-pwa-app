@@ -128,7 +128,11 @@ function groupByDate(matches: Match[]) {
   return groups
 }
 
-export default function MatchesList() {
+interface MatchesListProps {
+  matchweek: number
+}
+
+export default function MatchesList({ matchweek }: MatchesListProps) {
   const [matches, setMatches] = useState<Match[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -137,7 +141,7 @@ export default function MatchesList() {
     let cancelled = false
 
     const loadMatches = () => {
-      fetch('/api/matches')
+      fetch(`/api/matches?matchweek=${matchweek}`)
         .then((r) => r.json())
         .then((data) => {
           if (cancelled) return
@@ -164,7 +168,7 @@ export default function MatchesList() {
       cancelled = true
       clearInterval(intervalId)
     }
-  }, [])
+  }, [matchweek])
 
   if (loading) return <MatchesSkeleton />
   if (error) return <ErrorState message={error} />
@@ -208,7 +212,7 @@ function MatchCard({ match, index }: { match: Match; index: number }) {
   const isMU = match.homeTeam.abbr == 'MUN' || match.awayTeam.abbr == 'MUN'
   // Kiểu highlight mới cho isMU
   // Dùng border dạng dashed nổi bật với gradient nhạt, thêm một nhãn "MU"
-  console.log(match.homeTeam.name, match)
+  // console.log(match.homeTeam.name, match)
   const highlightStyle = isMU
     ? {
         border: '2px dashed #DA291C',

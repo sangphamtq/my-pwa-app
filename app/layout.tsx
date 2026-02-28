@@ -23,6 +23,9 @@ export const viewport: Viewport = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const buildId = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 8) ?? Date.now().toString()
+  const isProd = process.env.NODE_ENV === 'production'
+
   return (
     <html lang="vi">
       <head>
@@ -34,11 +37,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                  navigator.serviceWorker.register('/sw.js')
-                    .then(r => console.log('SW registered'))
-                    .catch(e => console.error('SW error', e));
+              if ('serviceWorker' in navigator && ${isProd}) {
+                window.addEventListener('load', async () => {
+                  // Unregister SW cũ nếu BUILD_ID khác
+                  const regs = await navigator.serviceWorker.getRegistrations();
+                  for (const reg of regs) await reg.unregister();
+
+                  // Đăng ký SW mới với version trong query string
+                  // Query string thay đổi → browser download lại sw.js
+                  const reg = await navigator.serviceWorker.register(
+                    '/sw.js?v=${buildId}'
+                  );
+
+                  document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') reg.update();
+                  });
+
+                  navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    window.location.reload();
+                  });
                 });
               }
             `,

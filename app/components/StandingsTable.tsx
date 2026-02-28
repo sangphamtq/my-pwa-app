@@ -162,18 +162,17 @@ export default function StandingsTable() {
       {/* Table */}
       <div
         className="rounded-2xl overflow-hidden bg-white"
-        style={{ border: '1px solid rgba(255,255,255,0.06)' }}
       >
         {/* Header */}
         <div
           className="grid gap-1 px-3 py-2.5"
           style={{
-            gridTemplateColumns: '28px 1fr 28px 28px 28px 28px 28px 28px 28px 36px',
+            gridTemplateColumns: '28px 1fr 28px 28px 28px 28px 28px 36px',
             background: '#00c568',
             borderBottom: '1px solid rgba(255,255,255,0.06)',
           }}
         >
-          {['#', 'Đội', 'Đ', 'T', 'H', 'B', 'GA', 'GF', 'HS', 'Đ'].map((h, i) => (
+          {['#', 'Đội', 'Đ', 'T', 'H', 'B', 'HS', 'Đ'].map((h, i) => (
             <div
               key={i}
               className={`text-center text-xs font-bold tracking-wider ${i === 1 ? 'text-left' : ''}`}
@@ -213,7 +212,7 @@ export default function StandingsTable() {
               key={team.id}
               className="grid gap-1 px-3 py-2.5 items-center transition-colors hover:bg-white/5"
               style={{
-                gridTemplateColumns: '28px 1fr 28px 28px 28px 28px 28px 28px 28px 36px',
+                gridTemplateColumns: '28px 1fr 28px 28px 28px 28px 28px 36px',
                 background: isMU
                   ? 'linear-gradient(90deg, #f78d8d 0%, #ffd2b5 100%)'
                   : 'transparent',
@@ -246,6 +245,7 @@ export default function StandingsTable() {
                   >
                     {team.shortName}
                   </span>
+                  {JSON.stringify(live)}
                   {live && (
                     <div className="mt-0.5 flex items-center gap-1">
                       {live.scoreText && scoreState && (
@@ -276,8 +276,6 @@ export default function StandingsTable() {
                 overall.won,
                 overall.drawn,
                 overall.lost,
-                overall.goalsAgainst,
-                overall.goalsFor,
                 gd > 0 ? `+${gd}` : gd,
               ].map((val, i) => (
                 <div

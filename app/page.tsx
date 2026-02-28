@@ -1,13 +1,30 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import MatchesList from './components/MatchesList'
 import StandingsTable from './components/StandingsTable'
 
 type Tab = 'matches' | 'standings'
 
+const MIN_MATCHWEEK = 1
+const MAX_MATCHWEEK = 38
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>('matches')
+  const [matchweek, setMatchweek] = useState<number>(28)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const pickerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!pickerOpen) return
+    const close = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setPickerOpen(false)
+      }
+    }
+    document.addEventListener('click', close)
+    return () => document.removeEventListener('click', close)
+  }, [pickerOpen])
 
   return (
     <div className="min-h-screen">
@@ -56,18 +73,92 @@ export default function Home() {
               </span>
             </div>
 
-            <div className="ml-auto">
-              <span
-                className="text-xs px-2.5 py-1 rounded-full font-bold text-primary"
-                style={{
-                  background: 'rgba(0,255,135,0.1)',
-                  fontFamily: 'var(--font-barlow)',
-                  border: '1px solid rgba(0,255,135,0.6)',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                VÒNG 28
-              </span>
+            {/* Matchweek: chỉ hiện khi tab Lịch thi đấu + có dropdown chọn nhanh */}
+            <div className="ml-auto relative" ref={pickerRef}>
+              {activeTab === 'matches' ? (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setMatchweek((w) => Math.max(MIN_MATCHWEEK, w - 1))}
+                    disabled={matchweek <= MIN_MATCHWEEK}
+                    className="p-1 rounded-md disabled:opacity-40 text-primary hover:bg-white/10"
+                    aria-label="Vòng trước"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPickerOpen((o) => !o)}
+                    className="text-xs px-2.5 py-1 rounded-full font-bold text-primary inline-flex items-center gap-0.5"
+                    style={{
+                      background: 'rgba(0,255,135,0.1)',
+                      fontFamily: 'var(--font-barlow)',
+                      border: '1px solid rgba(0,255,135,0.6)',
+                      letterSpacing: '0.05em',
+                    }}
+                  >
+                    VÒNG {matchweek}
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={pickerOpen ? 'rotate-180' : ''}><path d="M6 9l6 6 6-6"/></svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMatchweek((w) => Math.min(MAX_MATCHWEEK, w + 1))}
+                    disabled={matchweek >= MAX_MATCHWEEK}
+                    className="p-1 rounded-md disabled:opacity-40 text-primary hover:bg-white/10"
+                    aria-label="Vòng sau"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                  </button>
+                </div>
+              ) : (
+                <span
+                  className="text-xs px-2.5 py-1 rounded-full font-bold text-primary"
+                  style={{
+                    background: 'rgba(0,255,135,0.1)',
+                    fontFamily: 'var(--font-barlow)',
+                    border: '1px solid rgba(0,255,135,0.6)',
+                    letterSpacing: '0.05em',
+                  }}
+                >
+                  VÒNG {matchweek}
+                </span>
+              )}
+
+              {activeTab === 'matches' && pickerOpen && (
+                <div
+                  className="absolute right-0 top-full mt-1 p-2 rounded-xl shadow-xl border border-white/10 overflow-hidden z-50"
+                  style={{
+                    background: 'rgba(20,20,25,0.98)',
+                    backdropFilter: 'blur(12px)',
+                    minWidth: '350px',
+                  }}
+                >
+                  <div className="text-[10px] font-semibold text-primary/80 px-1 pb-1.5" style={{ fontFamily: 'var(--font-barlow)' }}>
+                    Chọn vòng
+                  </div>
+                  <div className="grid grid-cols-10 gap-1 max-h-[220px] overflow-y-auto">
+                    {Array.from({ length: MAX_MATCHWEEK }, (_, i) => i + 1).map((w) => (
+                      <button
+                        key={w}
+                        type="button"
+                        onClick={() => {
+                          setMatchweek(w)
+                          setPickerOpen(false)
+                        }}
+                        className="w-7 h-7 rounded-md text-xs font-bold flex items-center justify-center transition-colors"
+                        style={{
+                          fontFamily: 'var(--font-barlow)',
+                          background: w === matchweek ? 'rgba(0,255,135,0.25)' : 'rgba(255,255,255,0.08)',
+                          color: w === matchweek ? '#00ff87' : 'rgba(255,255,255,0.9)',
+                          border: w === matchweek ? '1px solid rgba(0,255,135,0.6)' : '1px solid transparent',
+                        }}
+                      >
+                        {w}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -105,7 +196,7 @@ export default function Home() {
 
       {/* Content */}
       <main className="max-w-lg mx-auto pt-4">
-        {activeTab === 'matches' ? <MatchesList /> : <StandingsTable />}
+        {activeTab === 'matches' ? <MatchesList matchweek={matchweek} /> : <StandingsTable />}
       </main>
 
       {/* Bottom padding for safe area */}
