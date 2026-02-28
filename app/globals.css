@@ -48,10 +48,7 @@ body {
 .match-card {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.match-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(255, 40, 130, 0.2);
-}
+
 
 /* Glow effects */
 .glow-green {

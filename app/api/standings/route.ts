@@ -5,7 +5,7 @@ export const revalidate = 300
 export async function GET() {
   try {
     const res = await fetch(
-      'https://sdp-prem-prod.premier-league-prod.pulselive.com/api/v5/competitions/8/seasons/2025/standings?live=false',
+      'https://sdp-prem-prod.premier-league-prod.pulselive.com/api/v5/competitions/8/seasons/2025/standings?live=true',
       { next: { revalidate: 300 } }
     )
     const data = await res.json()

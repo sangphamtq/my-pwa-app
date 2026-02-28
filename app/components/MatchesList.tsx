@@ -73,6 +73,32 @@ function formatDate(dateStr: string) {
   )
 }
 
+function formatRelativeKickoff(kickoff: string) {
+  const d = parseKickoff(kickoff)
+  if (!d) return ''
+
+  const now = new Date()
+  const diffMs = d.getTime() - now.getTime()
+  const absMs = Math.abs(diffMs)
+
+  const minutes = Math.round(absMs / 60000)
+  const hours = Math.round(absMs / (60000 * 60))
+  const days = Math.round(absMs / (60000 * 60 * 24))
+
+  const inFuture = diffMs > 0
+
+  if (minutes < 60) {
+    if (minutes === 0) return inFuture ? 'Sắp bắt đầu' : 'Vừa kết thúc'
+    return inFuture ? `Còn ${minutes} phút nữa` : `${minutes} phút trước`
+  }
+
+  if (hours < 24) {
+    return inFuture ? `Còn ${hours} giờ nữa` : `${hours} giờ trước`
+  }
+
+  return inFuture ? `Còn ${days} ngày nữa` : `${days} ngày trước`
+}
+
 function groupByDate(matches: Match[]) {
   const groups: Record<string, Match[]> = {}
   matches.forEach((m) => {
@@ -88,6 +114,17 @@ function groupByDate(matches: Match[]) {
     if (!groups[key]) groups[key] = []
     groups[key].push(m)
   })
+
+  // Sort matches inside each date group by kickoff time (earliest first)
+  Object.values(groups).forEach((dayMatches) => {
+    dayMatches.sort((a, b) => {
+      const da = parseKickoff(a.kickoff)
+      const db = parseKickoff(b.kickoff)
+      if (!da || !db) return 0
+      return da.getTime() - db.getTime()
+    })
+  })
+
   return groups
 }
 
@@ -97,16 +134,36 @@ export default function MatchesList() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    fetch('/api/matches')
-      .then((r) => r.json())
-      .then((data) => {
-        setMatches(data.data || [])
-        setLoading(false)
-      })
-      .catch(() => {
-        setError('Không thể tải dữ liệu')
-        setLoading(false)
-      })
+    let cancelled = false
+
+    const loadMatches = () => {
+      fetch('/api/matches')
+        .then((r) => r.json())
+        .then((data) => {
+          if (cancelled) return
+          setMatches(data.data || [])
+          setError('')
+        })
+        .catch(() => {
+          if (cancelled) return
+          setError('Không thể tải dữ liệu')
+        })
+        .finally(() => {
+          if (cancelled) return
+          setLoading(false)
+        })
+    }
+
+    // initial load
+    loadMatches()
+
+    // poll every 10s
+    const intervalId = setInterval(loadMatches, 10000)
+
+    return () => {
+      cancelled = true
+      clearInterval(intervalId)
+    }
   }, [])
 
   if (loading) return <MatchesSkeleton />
@@ -145,17 +202,19 @@ export default function MatchesList() {
 }
 
 function MatchCard({ match, index }: { match: Match; index: number }) {
-  const isLive = match.period === 'Live' || match.period === 'HalfTime'
   const isFinished = match.period === 'FullTime'
+  const isLive = match.period !== 'PreMatch' && !isFinished
   const hasScore = match.homeTeam.score !== undefined
   const isMU = match.homeTeam.abbr == 'MUN' || match.awayTeam.abbr == 'MUN'
-
-  // Highlight card if isMU is true
+  // Kiểu highlight mới cho isMU
+  // Dùng border dạng dashed nổi bật với gradient nhạt, thêm một nhãn "MU"
+  console.log(match.homeTeam.name, match)
   const highlightStyle = isMU
     ? {
-        boxShadow: '0 0 0 3px #DA291C80, 0 2px 16px 0 rgba(218,41,28,0.08)',
-        border: '2px solid #DA291C', // MU Red
-        background: 'rgba(218,41,28,0.10)',
+        border: '2px dashed #DA291C',
+        background: 'linear-gradient(90deg, #FFF1F1 0%, #FFD6D6 100%)',
+        position: 'relative' as const,
+        // Không dùng box-shadow cho cảm giác "nổi"
       }
     : {}
 
@@ -190,7 +249,7 @@ function MatchCard({ match, index }: { match: Match; index: number }) {
 
         {/* Score / Time */}
         <div className="flex flex-col items-center min-w-[80px]">
-          {hasScore ? (
+          {hasScore && match.period !== 'PreMatch' ? (
             <div
               className="flex items-center gap-2 text-2xl font-black"
               style={{ fontFamily: 'var(--font-barlow)', fontWeight: 900 }}
@@ -232,7 +291,7 @@ function MatchCard({ match, index }: { match: Match; index: number }) {
           <div className="mt-1">
             {isLive && (
               <span
-                className="text-xs px-2 py-0.5 rounded-full font-bold tracking-wider"
+                className="text-xs px-2 py-0.5 rounded-full font-bold tracking-wider inline-flex items-center gap-1"
                 style={{
                   background: 'rgba(255,40,130,0.2)',
                   color: '#FF2882',
@@ -241,7 +300,33 @@ function MatchCard({ match, index }: { match: Match; index: number }) {
                   letterSpacing: '0.1em',
                 }}
               >
-                ● TRỰC TIẾP {match.clock ? `${match.clock}'` : ''}
+                {/* Red blinking dot */}
+                <span
+                  className="inline-block align-middle"
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: '#FF0000',
+                    marginRight: '4px',
+                    animation: 'blink-red-dot 1s infinite',
+                  }}
+                />
+                {match.period === 'HalfTime'
+                  ? 'Giữa hiệp'
+                  : (
+                      <>
+                        TRỰC TIẾP {match.clock ? `${match.clock}'` : ''}
+                      </>
+                    )
+                }
+                {/* Add keyframes for blinking dot */}
+                <style jsx>{`
+                  @keyframes blink-red-dot {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.25; }
+                  }
+                `}</style>
               </span>
             )}
             {isFinished && (
@@ -258,7 +343,7 @@ function MatchCard({ match, index }: { match: Match; index: number }) {
                 KẾT THÚC
               </span>
             )}
-            {!hasScore && !isLive && (
+            {match.period === 'PreMatch' && (
               <span
                 style={{
                   fontSize: '10px',
@@ -266,7 +351,7 @@ function MatchCard({ match, index }: { match: Match; index: number }) {
                   fontFamily: 'var(--font-barlow)',
                 }}
               >
-                VS
+                {formatRelativeKickoff(match.kickoff)}
               </span>
             )}
           </div>
@@ -302,7 +387,7 @@ function MatchesSkeleton() {
         <div
           key={i}
           className="h-20 rounded-xl animate-pulse"
-          style={{ background: '#1A0A1C', animationDelay: `${i * 0.05}s` }}
+          style={{ background: '#eecaf6', animationDelay: `${i * 0.05}s` }}
         />
       ))}
     </div>

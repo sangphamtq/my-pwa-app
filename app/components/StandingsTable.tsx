@@ -18,9 +18,18 @@ interface TeamEntry {
   team: { name: string; id: string; shortName: string; abbr: string }
 }
 
+interface LiveTeamInfo {
+  scoreText: string
+  clock?: string
+  period: string
+  homeScore: number
+  awayScore: number
+  isHome: boolean
+}
+
 const ZONE_COLORS = {
-  champions: '#00FF87', // 1-4
-  europa: '#4FD1FF',    // 5
+  champions: '#00c568', // 1-4
+  europa: '#03bdff',    // 5
   conference: '#A78BFA', // 6
   relegation: '#FF2882', // 18-20
 }
@@ -37,6 +46,7 @@ export default function StandingsTable() {
   const [entries, setEntries] = useState<TeamEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [liveByTeam, setLiveByTeam] = useState<Record<string, LiveTeamInfo>>({})
 
   useEffect(() => {
     fetch('/api/standings')
@@ -51,6 +61,73 @@ export default function StandingsTable() {
         setError('Không thể tải bảng xếp hạng')
         setLoading(false)
       })
+  }, [])
+
+  // Poll live matches to attach live score + time to each team
+  useEffect(() => {
+    let cancelled = false
+
+    const loadMatches = () => {
+      fetch('/api/matches')
+        .then((r) => r.json())
+        .then((data) => {
+          if (cancelled) return
+
+          const matches: any[] = data.data || []
+          const nextLiveByTeam: Record<string, LiveTeamInfo> = {}
+
+          matches.forEach((m) => {
+            const period: string = m.period
+            const isFinished = period === 'FullTime'
+            const isLive = period !== 'PreMatch' && !isFinished
+            const home = m.homeTeam
+            const away = m.awayTeam
+
+            if (!isLive || !home || !away) return
+
+            const homeScore = typeof home.score === 'number' ? home.score : 0
+            const awayScore = typeof away.score === 'number' ? away.score : 0
+            const scoreText = `${homeScore}-${awayScore}`
+            const clock: string | undefined = m.clock
+
+            if (home.id) {
+              nextLiveByTeam[String(home.id)] = {
+                scoreText,
+                clock,
+                period,
+                homeScore,
+                awayScore,
+                isHome: true,
+              }
+            }
+
+            if (away.id) {
+              nextLiveByTeam[String(away.id)] = {
+                scoreText,
+                clock,
+                period,
+                homeScore,
+                awayScore,
+                isHome: false,
+              }
+            }
+          })
+
+          setLiveByTeam(nextLiveByTeam)
+        })
+        .catch(() => {
+          if (cancelled) return
+          // Silent fail – standings vẫn hiển thị bình thường
+        })
+    }
+
+    loadMatches()
+    const intervalId = setInterval(loadMatches, 10000)
+
+    return () => {
+      cancelled = true
+      clearInterval(intervalId)
+    }
   }, [])
 
   if (loading) return <StandingsSkeleton />
@@ -91,12 +168,12 @@ export default function StandingsTable() {
         <div
           className="grid gap-1 px-3 py-2.5"
           style={{
-            gridTemplateColumns: '28px 1fr 28px 28px 28px 28px 28px 36px',
-            background: 'rgba(0,0,0,0.4)',
+            gridTemplateColumns: '28px 1fr 28px 28px 28px 28px 28px 28px 28px 36px',
+            background: '#00c568',
             borderBottom: '1px solid rgba(255,255,255,0.06)',
           }}
         >
-          {['#', 'Đội', 'Đ', 'T', 'H', 'B', 'HS', 'Đ'].map((h, i) => (
+          {['#', 'Đội', 'Đ', 'T', 'H', 'B', 'GA', 'GF', 'HS', 'Đ'].map((h, i) => (
             <div
               key={i}
               className={`text-center text-xs font-bold tracking-wider ${i === 1 ? 'text-left' : ''}`}
@@ -117,15 +194,30 @@ export default function StandingsTable() {
           const gd = overall.goalsFor - overall.goalsAgainst
           const zone = getZone(overall.position)
           const isTop4 = overall.position <= 4
+          const isMU = team.abbr === 'MUN'
+          const live = liveByTeam[team.id]
+          const scoreState = live
+            ? live.homeScore > live.awayScore
+              ? live.isHome
+                ? 'win'
+                : 'lose'
+              : live.awayScore > live.homeScore
+                ? live.isHome
+                  ? 'lose'
+                  : 'win'
+                : 'draw'
+            : null
 
           return (
             <div
               key={team.id}
               className="grid gap-1 px-3 py-2.5 items-center transition-colors hover:bg-white/5"
               style={{
-                gridTemplateColumns: '28px 1fr 28px 28px 28px 28px 28px 36px',
-                background: idx % 2 === 0 ? 'rgba(255,255,255,0.01)' : 'transparent',
-                borderBottom: '1px solid rgba(255,255,255,0.04)',
+                gridTemplateColumns: '28px 1fr 28px 28px 28px 28px 28px 28px 28px 36px',
+                background: isMU
+                  ? 'linear-gradient(90deg, #f78d8d 0%, #ffd2b5 100%)'
+                  : 'transparent',
+                borderBottom: '1px solid rgba(0,0,0,0.1)',
                 borderLeft: zone !== 'transparent' ? `2px solid ${zone}` : '2px solid transparent',
                 animationDelay: `${idx * 0.03}s`,
               }}
@@ -135,24 +227,47 @@ export default function StandingsTable() {
                 className="text-center text-sm font-bold"
                 style={{
                   fontFamily: 'var(--font-barlow)',
-                  color: zone !== 'transparent' ? zone : '#222222',
+                  color: isMU ? 'white' : zone !== 'transparent' ? zone : '#222222',
                 }}
               >
                 {overall.position}
               </div>
 
-              {/* Team */}
+              {/* Team + live info */}
               <div className="flex items-center gap-2 min-w-0">
                 <TeamCrest abbr={team.abbr} size={24} />
-                <span
-                  className="text-sm font-semibold truncate"
-                  style={{
-                    fontFamily: 'var(--font-barlow)',
-                    color: isTop4 ? '#222222' : '#222222',
-                  }}
-                >
-                  {team.shortName}
-                </span>
+                <div className="flex gap-2 min-w-0">
+                  <span
+                    className="text-sm font-semibold truncate"
+                    style={{
+                      fontFamily: 'var(--font-barlow)',
+                      color: isTop4 ? '#222222' : '#222222',
+                    }}
+                  >
+                    {team.shortName}
+                  </span>
+                  {live && (
+                    <div className="mt-0.5 flex items-center gap-1">
+                      {live.scoreText && scoreState && (
+                        <span
+                          className="px-1.5 py-0.5 rounded text-[11px] font-semibold"
+                          style={{
+                            background:
+                              scoreState === 'win'
+                                ? '#00c568'
+                                : scoreState === 'lose'
+                                  ? '#DC2626'
+                                  : '#6B7280',
+                            color: 'white',
+                            fontFamily: 'var(--font-barlow)',
+                          }}
+                        >
+                          {live.scoreText}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Stats */}
@@ -161,6 +276,8 @@ export default function StandingsTable() {
                 overall.won,
                 overall.drawn,
                 overall.lost,
+                overall.goalsAgainst,
+                overall.goalsFor,
                 gd > 0 ? `+${gd}` : gd,
               ].map((val, i) => (
                 <div
@@ -177,10 +294,10 @@ export default function StandingsTable() {
 
               {/* Points */}
               <div
-                className="text-center text-sm font-black"
+                className="text-center text-sm font-bold"
                 style={{
                   fontFamily: 'var(--font-barlow)',
-                  color: isTop4 ? '#00FF87' : '#F8F8F8',
+                  color: isTop4 ? '#00c568' : '#444444',
                   fontSize: '15px',
                 }}
               >
@@ -201,7 +318,7 @@ function StandingsSkeleton() {
         <div
           key={i}
           className="h-12 rounded-lg animate-pulse"
-          style={{ background: '#1A0A1C', animationDelay: `${i * 0.03}s` }}
+          style={{ background: '#eecaf6', animationDelay: `${i * 0.03}s` }}
         />
       ))}
     </div>
